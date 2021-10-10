@@ -1,0 +1,15 @@
+{
+  "name": "nodejs_global_mentoring_program",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.epam.com/shubhajit_chatterjee/nodejs_global_mentoring_program.git"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -4,12 +4,25 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "task1": "nodemon src/Task_1.1.js",
+    "task2": "nodemon src/Task_1.2.js",
+    "task2:es6": "babel-node src/Task_1.2_es6.js",
+    "task2:es6:watch": "nodemon --exec npm run task2:es6"
   },
   "repository": {
     "type": "git",
     "url": "https://git.epam.com/shubhajit_chatterjee/nodejs_global_mentoring_program.git"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.15.7",
+    "@babel/core": "^7.15.8",
+    "@babel/node": "^7.15.8",
+    "@babel/preset-env": "^7.15.8",
+    "nodemon": "^2.0.13"
+  },
+  "dependencies": {
+    "csvtojson": "^2.0.10"
+  }
 }

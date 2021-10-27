@@ -1,0 +1,6 @@
+export const STATUS_CODE = {
+    NOT_FOUND: 404,
+    SUCESSFULL: 200,
+    CREATED: 201,
+    BAD_REQUEST: 400
+}

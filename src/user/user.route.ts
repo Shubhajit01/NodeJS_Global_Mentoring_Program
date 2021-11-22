@@ -1,83 +1,65 @@
-import { Router } from "express";
-import { createValidator, ValidatedRequest } from "express-joi-validation";
-import { STATUS_CODE } from "../constants/http-code.constant";
-import { USER_CONST } from "../constants/user.constant";
-import {
-  UserSchemaOptional,
-  UserSchemaRequired,
-  UserValidatedSchema,
-} from "./user.model";
-import {
-  createUser,
-  getUserById,
-  updateUser,
-  getUsers,
-  deleteUserById,
-} from "./user.service";
+import { Router } from 'express';
+import { STATUS_CODE } from '../constants/http-code.constant';
+import { USER_CONST } from '../constants/user.constant';
+import { validateBodyDto } from '../utils';
+import { createUserDto } from './dtos/create-user.dto';
+import updateUserDto from './dtos/update-user.dto';
+import userService from './user.service';
 
 export const userRouter = Router();
 
-const validator = createValidator();
-
-userRouter.get("/list", (req, res) => {
+userRouter.get('/list', async (req, res) => {
   const { loginSubstring, limit } = req.query as Record<string, string>;
 
-  const users = getUsers(loginSubstring, +limit);
+  const users = await userService.getUsersSuggestions(loginSubstring, +limit);
 
   res.status(STATUS_CODE.SUCESSFULL).json(users);
 });
 
-userRouter.get("/:id", (req, res) => {
+userRouter.get('/:id', async (req, res) => {
   const { id } = req.params;
 
-  const user = getUserById(id);
+  const user = await userService.findById(id);
 
-  if (!user?.isDeleted) {
-    res.status(STATUS_CODE.SUCESSFULL).send(user);
-  } else {
-    res.status(STATUS_CODE.NOT_FOUND).send(USER_CONST.NOT_FOUND);
+  if (user) {
+    res.json(user);
+    return;
+  }
+
+  res.status(STATUS_CODE.NOT_FOUND).send(USER_CONST.NOT_FOUND);
+});
+
+userRouter.post('/', validateBodyDto(createUserDto), async (req, res) => {
+  try {    
+    const user = await userService.createUser(req.body);
+    res.status(STATUS_CODE.CREATED).send(user);
+  } catch (err) {
+    res.status(STATUS_CODE.BAD_REQUEST).send();
   }
 });
 
-userRouter.post(
-  "/",
-  validator.body(UserSchemaRequired),
-  (req: ValidatedRequest<UserValidatedSchema>, res) => {
-    const user = req.body;
+userRouter.patch('/:id', validateBodyDto(updateUserDto), async (req, res) => {
+  const { id } = req.params;
 
-    const { password, isDeleted, ...dbUser } = createUser(user);
+  const updates = req.body;
 
-    res.status(STATUS_CODE.CREATED).send(dbUser);
+  try {
+    const updatedUser = await userService.updateUser(id, updates);
+    res.status(STATUS_CODE.SUCESSFULL).json(updatedUser);
+  } catch (err) {
+    const { message } = err as Error;
+    res.status(STATUS_CODE.BAD_REQUEST).json({ message });
   }
-);
+});
 
-userRouter.patch(
-  "/:id",
-  validator.body(UserSchemaOptional),
-  (req: ValidatedRequest<UserValidatedSchema>, res) => {
-    const { id } = req.params;
-
-    const updates = req.body;
-
-    try {
-      const updatedUser = updateUser(id, updates);
-      const { isDeleted, password, ...user } = updatedUser;
-      res.status(STATUS_CODE.SUCESSFULL).json(user);
-    } catch (err) {
-      const { message } = err as Error;
-      res.status(STATUS_CODE.BAD_REQUEST).json({ message });
-    }
-  }
-);
-
-userRouter.delete("/:id", (req, res) => {
+userRouter.delete('/:id', async (req, res) => {
   const { id } = req.params as Record<string, string>;
 
   console.log(id);
 
   try {
-    const { isDeleted, password, ...user } = deleteUserById(id);
-    res.status(STATUS_CODE.SUCESSFULL).json(user);
+    const result = await userService.deleteUser(id);
+    res.status(STATUS_CODE.SUCESSFULL).json(result);
   } catch (err) {
     const { message } = err as Error;
     res.status(STATUS_CODE.NOT_FOUND).json({ message });

@@ -1,14 +1,15 @@
-import express from "express";
-import morgan from "morgan";
+import 'reflect-metadata';
+import express from 'express';
+import init from './init';
 
-import { userRouter } from "./user/user.route";
+const startServer = async () => {
+  const app = express();
+  await init(app);
 
-const app = express();
+  const PORT = process.env.PORT ?? 3000;
+  app.listen(PORT, () => {
+    console.log(`Server listening at ${PORT}`);
+  });
+};
 
-app.use(morgan("dev"));
-app.use(express.json());
-
-app.use("/user", userRouter);
-
-const PORT = process.env.PORT ?? 3000;
-app.listen(PORT, () => console.log(`Server is running at ${PORT}`));
+startServer();

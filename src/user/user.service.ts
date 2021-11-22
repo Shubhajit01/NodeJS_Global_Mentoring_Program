@@ -1,75 +1,34 @@
-import { v4 as uuid } from "uuid";
+import { createUserDto } from './dtos/create-user.dto';
+import updateUserDto from './dtos/update-user.dto';
+import { User } from './user.entity';
+import userRepository, { UserRepository } from './user.repository';
 
-import { User, UserDto } from "./user.model";
+class UserService {
+  constructor(private readonly userRepository: UserRepository) {}
 
-import { usersDB } from "../db/user.db";
-import { USER_CONST } from "../constants/user.constant";
-
-export const getUserById = (id: string): User | undefined => {
-  return usersDB.find((user) => user.id === id);
-};
-
-export const createUser = (user: UserDto): User => {
-  const dbUser = {
-    ...user,
-    id: uuid(),
-    isDeleted: false,
-  };
-
-  usersDB.push(dbUser);
-
-  return dbUser;
-};
-
-export const updateUser = (id: string, userUpdates: Partial<UserDto>): User => {
-  const index = usersDB.findIndex((user) => user.id === id);
-
-  if (index === -1) {
-    throw new Error(USER_CONST.NOT_FOUND);
+  findById(id: string): Promise<User | undefined> {
+    return this.userRepository.findById(id);
   }
 
-  const user = usersDB[index];
-
-  if (user.isDeleted) {
-    throw new Error(USER_CONST.NOT_FOUND);
+  getUsersSuggestions(loginSub: string, limit?: number) {
+    return this.userRepository.filterUser(loginSub, limit);
   }
 
-  const updatedUser = {
-    ...user,
-    ...userUpdates,
-  };
+  async createUser(user: createUserDto) {
+    const { password, isDeleted, ...dbUser } =
+      await this.userRepository.createUser(user);
+    return dbUser;
+  }
 
-  usersDB[index] = updatedUser;
-
-  return updatedUser;
-};
-
-export const getUsers = (substr = "", limit = Infinity): Array<User> => {
-  const users: Array<User> = [];
-
-  usersDB.some((user) => {
-    if (!user.isDeleted && user.login.includes(substr)) {
-      users.push(user);
-    }
-    return users.length === limit;
-  });
-
-  users.sort((user1, user2) => (user1.login > user2.login ? 1 : -1));
-
-  return users;
-};
-
-export const deleteUserById = (id: string) => {
-  const user = usersDB.find((user) => user.id === id);
-
-  console.log(user);
+  async updateUser(id: string, details: updateUserDto) {
+    const result = await this.userRepository.updateUser(id, details);
+    return result.generatedMaps;
+  }
   
-
-  if (!user || user.isDeleted) {
-    throw new Error(USER_CONST.NOT_FOUND);
+  async deleteUser(id: string) {
+    const result = await this.userRepository.deleteUser(id);
+    return result.generatedMaps;
   }
+}
 
-  user.isDeleted = true;
-
-  return user;
-};
+export default new UserService(userRepository);
